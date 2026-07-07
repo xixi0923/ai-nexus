@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # ── C++ 核心服务：构建 + 单元测试 ──────────────────────────
+  cpp:
+    name: C++ build & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libssl-dev
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test (ctest)
+        run: ctest --test-dir build --output-on-failure
+
+  # ── Vue 前端：依赖安装 + 构建 ──────────────────────────────
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+  # ── PHP 中转层：语法检查 ───────────────────────────────────
+  php:
+    name: PHP lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint PHP files
+        run: |
+          status=0
+          while IFS= read -r f; do
+            php -l "$f" >/dev/null || { echo "PHP syntax error: $f"; status=1; }
+          done < <(find gateway -name '*.php' -type f)
+          exit $status

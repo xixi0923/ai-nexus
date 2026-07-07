@@ -1,20 +1,24 @@
 #include "ai/nlp_engine.h"
 #include "ai/llm_client.h"
+#include "ai/nlp_rules.h"
 #include <algorithm>
 
 NLPEngine::NLPEngine(LLMClient& llm) : llm_(llm) {}
 
 nlohmann::json NLPEngine::analyze(const std::string& text,
                                   const std::vector<std::string>& tasks) {
-    // 无 API Key 时退化为规则实现，保证服务可用
+    // 无 API Key / LLM 失败时退化为规则引擎，保证服务可用
     if (tasks.empty()) return {{"text", text}};
 
     try {
         return analyze_by_llm(text, tasks);
     } catch (...) {
         nlohmann::json fallback = {{"text", text}, {"mode", "rule"}};
-        if (std::find(tasks.begin(), tasks.end(), "sentiment") != tasks.end())
-            fallback["sentiment"] = rule_sentiment(text);
+        for (const auto& t : tasks) {
+            if (t == "sentiment")      fallback["sentiment"] = nlp_rules::sentiment(text);
+            else if (t == "intent")    fallback["intent"]    = nlp_rules::intent(text);
+            else if (t == "entities")  fallback["entities"]  = nlp_rules::entities(text);
+        }
         return fallback;
     }
 }
@@ -37,13 +41,4 @@ nlohmann::json NLPEngine::analyze_by_llm(const std::string& text,
     if (a == std::string::npos || b == std::string::npos)
         throw std::runtime_error("llm returned no json");
     return nlohmann::json::parse(reply.substr(a, b - a + 1));
-}
-
-// 极简规则情感：命中正向/负向词典即判定，否则 neutral
-std::string NLPEngine::rule_sentiment(const std::string& text) const {
-    static const std::vector<std::string> pos = {"好", "赞", "喜欢", "棒", "优秀", "great", "good", "love"};
-    static const std::vector<std::string> neg = {"差", "烂", "讨厌", "糟", "坏", "bad", "hate", "worst"};
-    for (const auto& w : neg) if (text.find(w) != std::string::npos) return "negative";
-    for (const auto& w : pos) if (text.find(w) != std::string::npos) return "positive";
-    return "neutral";
 }

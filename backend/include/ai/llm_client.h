@@ -4,10 +4,7 @@
 #include <functional>
 #include <nlohmann/json.hpp>
 
-struct ChatMessage {
-    std::string role;    // "system" | "user" | "assistant"
-    std::string content;
-};
+#include "ai/llm_protocol.h"   // ChatMessage 与请求/响应协议纯函数（header-only）
 
 // 统一的大模型调用适配层。
 // 默认对接 OpenAI 兼容 /v1/chat/completions 与 /v1/embeddings，

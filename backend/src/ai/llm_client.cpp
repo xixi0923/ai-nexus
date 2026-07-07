@@ -31,21 +31,15 @@ std::pair<int, std::string> LLMClient::post_json(const std::string& path,
 
 nlohmann::json LLMClient::chat(const std::vector<ChatMessage>& messages,
                                double temperature) {
-    nlohmann::json msg_arr = nlohmann::json::array();
-    for (const auto& m : messages)
-        msg_arr.push_back({{"role", m.role}, {"content", m.content}});
-
-    nlohmann::json payload = {
-        {"model", model_}, {"messages", msg_arr},
-        {"temperature", temperature}, {"stream", false}};
+    nlohmann::json payload = build_chat_request(model_, messages, false, temperature);
 
     auto [status, body] = post_json("/chat/completions", payload, false);
     if (status != 200)
         return {{"error", true}, {"http_status", status}, {"body", body}};
 
     try {
+        std::string reply = parse_chat_content(body);
         auto j = nlohmann::json::parse(body);
-        std::string reply = j["choices"][0]["message"]["content"].get<std::string>();
         nlohmann::json usage = j.value("usage", nlohmann::json::object());
         return {{"reply", reply}, {"model", j.value("model", model_)}, {"usage", usage}};
     } catch (...) {
