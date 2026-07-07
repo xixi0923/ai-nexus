@@ -1,0 +1,45 @@
+# ===== C++ build artifacts =====
+backend/build/
+backend/cmake-build-*/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.lib
+compile_commands.json
+
+# ===== Node / Vue =====
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===== PHP =====
+gateway/vendor/
+gateway/.env
+gateway/composer.lock
+
+# ===== AI / data =====
+*.pt
+*.pth
+*.gguf
+*.bin
+vectors/
+data/embeddings/
+data/index/
+__pycache__/
+
+# ===== Logs & caches =====
+*.log
+logs/
+.pytest_cache/
+.ruff_cache/
+.phpunit.cache/
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,11 @@
+{
+  "name": "ai-nexus/gateway",
+  "description": "AI-Nexus PHP 中转层与页面渲染",
+  "require": {
+    "php": ">=8.1",
+    "ext-curl": "*"
+  },
+  "autoload": {
+    "psr-4": { "App\\": "src/" }
+  }
+}
